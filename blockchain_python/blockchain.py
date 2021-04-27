@@ -112,12 +112,12 @@ class Blockchain(object):
     @property
     def last_block(self):
         # Return the last block in the chain
-        pass
+        return self.chain[-1]
 
 #%%
 
 # Instantiate a server as a node in our blockchain
-app = Flask(__name__)
+app = Flask(__name__,)
 
 # Generate a globally Universially Unique ID address for this node
 node_identifier = str(uuid4()).replace('-','')
@@ -178,13 +178,14 @@ def full_chain():
     return jsonify(response), 200
 
 if __name__ == '__main__':
+    app.debug = True
     app.run(host='0.0.0.0', port=5000)
 
 
 #%%
 # Sandbox:
-node_identifier = str(uuid4()).replace('-','')
-print(node_identifier)
-print(str(uuid4()))
+#node_identifier = str(uuid4()).replace('-','')
+#print(node_identifier)
+#print(str(uuid4()))
 
 # %%
