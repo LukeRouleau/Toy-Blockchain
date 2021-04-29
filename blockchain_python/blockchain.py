@@ -155,6 +155,8 @@ class Blockchain(object):
         if new_chain:
             self.chain = new_chain
             return true
+
+        # our chain was the GOAT   
         return False
 
     @staticmethod
@@ -258,6 +260,40 @@ def full_chain():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 
+@app.route('/nodes/register', methods=['POST'])
+def register_nodes():
+    values = request.get_json()
+
+    nodes = values.get('nodes')
+    if nodes is None:
+        return 'Error: Please supply a valid list of nodes', 400
+
+    for node in nodes:
+        blockchain.register_node(node)
+
+    res = {
+        'message': 'New nodes have been added',
+        'total_nodes': list(blockchain.nodes),
+    }
+    return jsonify(res), 201
+
+@app.route('/nodes/resolve', methods=['GET'])
+def consensus():
+    replaced = blockchain.resolve_conflicts() # this function does all the work (networking included) itself
+                                              # and returns True if we had to change our chain to get consensus
+    if replaced:
+        res = {
+            'message': 'Our chain was replaced to reach consensus.'
+            'new_chain': blockchain.chain
+        }
+    else:
+        res = {
+            'message': 'Our chain is authoritative'
+            'chain': blockchain.chain
+        }
+    return jsonify(res), 200
+
+    
 
 #%%
 # Sandbox:
