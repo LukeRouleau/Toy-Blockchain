@@ -26,11 +26,14 @@ class Blockchain(object):
     def __init__(self):
         self.chain = []
         self.current_transactions = []
+        self.nodes = set() # create an empty set for the list of nodes (i.e. like the wallets)
+                           # stores the netloc portion of the addresses
+                           # We use a set as a cheap way to to guarantee only unique addresses
 
         # Create the genesis block
         self.new_block(previous_hash=1, proof=100)
 
-
+    # create a new block to add to the chain
     def new_block(self, proof, previous_hash=None):
         """
         Create a new Block in the Blockchain
@@ -68,6 +71,7 @@ class Blockchain(object):
         # return the index of the block which the transaction will be added to, next one mined
         return self.last_block['index'] + 1
 
+    # calculate the POW number to add into the block
     def proof_of_work(self, last_proof):
         """
         Simple Proof of Work Algorithm:
@@ -80,6 +84,78 @@ class Blockchain(object):
         while self.valid_proof(last_proof, proof) is False:
             proof += 1
         return proof
+
+
+    # This means we are entering another user into our system
+    def register_node(self, address):
+        """
+        Add a new node to the list of nodes
+        :param address: <str> Address of node. Eg. 'http://192.168.0.5:5000'
+        :return: None
+        """
+        parsed_url = urlparse(address) # takes in a url string and it breaks it 
+                                       # into an object with all the url components separated.
+        self.nodes.add(parsed_url.netloc) # add only the netloc component
+        
+    def valid_chain(self, chain):
+        """
+        Determine if a given blockchain is valid
+        :param chain: <list> A blockchain
+        :return: <bool> True if valid, False if not
+        """
+        # entry condition for the iteration
+        # basically move two pointers down the chain to verify the correctness
+        last_block = chain[0]
+        current_index = 1
+        while(current_index < len(chain)):
+            block = chain[current_index]
+            print(f'{last_block}')
+            print(f'{block}')
+            print("\n-----------\n")
+            # check that the hash of the block is correct
+            if(block['previous_hash'] != self.hash(last_block)):
+                return False            
+            
+            # check if the POW is correct too
+            if not self.valid_proof(last_block['proof'], block['proof']):
+                return False
+
+            last_block = block
+            current_index += 1
+        return True
+
+    def resolve_conflicts(self):
+        """
+        This is our Consensus Algorithm, it resolves conflicts
+        by replacing our chain with the longest one in the network.
+        :return: <bool> True if our chain was replaced, False if not
+        """
+        neighbours = self.nodes # the other network access points
+        new_chain = None
+
+        # only looking for chains that are longer than our own
+        max_length = len(self.chain) # grab the length of our personal chain
+
+        # grab and verify the chains from all the other nodes in our network
+        for node in neighbours:
+            # res stands for response, which is standard syntax for networking like this
+            res = requests.get(f'http://{node}/chain') # remember that we stored the neighbors as netlocs 
+            # successful request
+            if res.status_code == 200:
+                length = response.json()['length']  # how long is this node's chain?
+                chain = response.json()['chain']    # grab this node's chain
+
+                # check is the length is longer and if the chain is valid
+                if length > max_length and self.valid_chain(chain):
+                    # whelp, our chain is not it... but maybe there's a bigger fish too, so keep iterating
+                    max_length = length
+                    new_chain = chain
+
+        # if new_chain is still None type, we won't enter this if():
+        if new_chain:
+            self.chain = new_chain
+            return true
+        return False
 
     @staticmethod
     def valid_proof(last_proof, proof):
@@ -95,7 +171,6 @@ class Blockchain(object):
         return guess_hash[:4] == "0000" # increasing this size makes a massive in time
 
 
-    # I'm still not entirely clear on the nature of staticmethods, 
     @staticmethod
     def hash(block):
         """
@@ -157,7 +232,8 @@ def mine():
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
     values = request.get_json()
-    
+    print(values)    
+    print(type(values))
     # Check that the required fields are in the POST'ed data
     required = ['sender', 'recipient', 'amount']
     if not all(k in values for k in required):
@@ -169,8 +245,10 @@ def new_transaction():
     response = {'message': f'Transaction will be added to Block {index}'}
     return jsonify(response), 201
 
+
 @app.route('/chain', methods=['GET'])
 def full_chain():
+    # when we grab the full chain from a node, make the response the chain and append the chain length
     response = {
         'chain': blockchain.chain,
         'length': len(blockchain.chain),
@@ -178,14 +256,17 @@ def full_chain():
     return jsonify(response), 200
 
 if __name__ == '__main__':
-    app.debug = True
     app.run(host='0.0.0.0', port=5000)
 
 
 #%%
 # Sandbox:
-#node_identifier = str(uuid4()).replace('-','')
-#print(node_identifier)
-#print(str(uuid4()))
-
+parsed_url = urlparse('http://192.168.0.5:5000')
+print(parsed_url)
+# %%
+new_chain = None
+if new_chain:
+    print('This is not how I expect it to behave')
+else:
+    print('This is what I expect')
 # %%
