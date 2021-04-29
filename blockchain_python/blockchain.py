@@ -283,12 +283,12 @@ def consensus():
                                               # and returns True if we had to change our chain to get consensus
     if replaced:
         res = {
-            'message': 'Our chain was replaced to reach consensus.'
+            'message': 'Our chain was replaced to reach consensus.',
             'new_chain': blockchain.chain
         }
     else:
         res = {
-            'message': 'Our chain is authoritative'
+            'message': 'Our chain is authoritative',
             'chain': blockchain.chain
         }
     return jsonify(res), 200
