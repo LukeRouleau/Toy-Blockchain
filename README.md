@@ -41,7 +41,9 @@ the requests are : http://localhost:xxxx/mine, http://localhost:xxxx/chain, http
   
  # Future work: 
  Transaction Validation Mechanism as well as productionizing your Blockchain so that you don't have to cal everything manually and it becomes a simple-to-use system 
-  
+ 
+ I also want to use Tornado as my Python web server of choice next time. Flask causes many headaches.
+
   
   
   
