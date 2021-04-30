@@ -14,6 +14,7 @@ Purpose: To create basic blockchain in python
 
 import hashlib
 import json
+import sys
 from time import time
 from urllib.parse import urlparse
 from uuid import uuid4
@@ -142,8 +143,8 @@ class Blockchain(object):
             res = requests.get(f'http://{node}/chain') # remember that we stored the neighbors as netlocs 
             # successful request
             if res.status_code == 200:
-                length = response.json()['length']  # how long is this node's chain?
-                chain = response.json()['chain']    # grab this node's chain
+                length = res.json()['length']  # how long is this node's chain?
+                chain = res.json()['chain']    # grab this node's chain
 
                 # check is the length is longer and if the chain is valid
                 if length > max_length and self.valid_chain(chain):
@@ -154,7 +155,7 @@ class Blockchain(object):
         # if new_chain is still None type, we won't enter this if():
         if new_chain:
             self.chain = new_chain
-            return true
+            return True
 
         # our chain was the GOAT   
         return False
@@ -257,9 +258,6 @@ def full_chain():
     }
     return jsonify(response), 200
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-
 @app.route('/nodes/register', methods=['POST'])
 def register_nodes():
     values = request.get_json()
@@ -293,16 +291,7 @@ def consensus():
         }
     return jsonify(res), 200
 
-    
-
-#%%
-# Sandbox:
-parsed_url = urlparse('http://192.168.0.5:5000')
-print(parsed_url)
-# %%
-new_chain = None
-if new_chain:
-    print('This is not how I expect it to behave')
-else:
-    print('This is what I expect')
-# %%
+if __name__ == '__main__':
+    # get the node port from the command line argument
+    node_port = sys.argv[1] # the first command line argument is the port for this node
+    app.run(host='127.0.0.1', port=node_port, debug=True)
